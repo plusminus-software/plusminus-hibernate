@@ -20,9 +20,9 @@ import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.Ordered;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -61,8 +61,8 @@ public class HibernateFilterInterceptor implements HandlerInterceptor, WebMvcCon
     }
 
     @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response,
-                           Object handler, ModelAndView modelAndView) {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
+                                Object handler, @Nullable Exception ex) {
         Session session = (Session) request.getAttribute(ATTRIBUTE_NAME);
         if (session != null) {
             filters.forEach(f -> session.disableFilter(f.filterName()));
