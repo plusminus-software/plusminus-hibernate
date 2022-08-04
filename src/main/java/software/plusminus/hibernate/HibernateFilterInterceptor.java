@@ -15,7 +15,6 @@
  */
 package software.plusminus.hibernate;
 
-import org.hibernate.Filter;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -26,7 +25,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
@@ -42,7 +40,7 @@ public class HibernateFilterInterceptor implements HandlerInterceptor, WebMvcCon
     @PersistenceContext
     private EntityManager entityManager;
     @Autowired
-    private List<HibernateFilter> filters;
+    private HibernateFilterService filterService;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -52,10 +50,7 @@ public class HibernateFilterInterceptor implements HandlerInterceptor, WebMvcCon
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         Session session = entityManager.unwrap(Session.class);
-        filters.forEach(f -> {
-            Filter filter = session.enableFilter(f.filterName());
-            f.parameters().forEach(filter::setParameter);
-        });
+        filterService.enableFilters(session);
         request.setAttribute(ATTRIBUTE_NAME, session);
         return true;
     }
@@ -65,8 +60,8 @@ public class HibernateFilterInterceptor implements HandlerInterceptor, WebMvcCon
                                 Object handler, @Nullable Exception ex) {
         Session session = (Session) request.getAttribute(ATTRIBUTE_NAME);
         if (session != null) {
-            filters.forEach(f -> session.disableFilter(f.filterName()));
-            request.removeAttribute(ATTRIBUTE_NAME);
+            filterService.disableFilters(session);
         }
+        request.removeAttribute(ATTRIBUTE_NAME);
     }
 }
